@@ -1,0 +1,6 @@
+[submodule "neurodebian"]
+	path = neurodebian
+	url = git://github.com/neurodebian/neurodebian
+[submodule "stackbrew"]
+	path = stackbrew
+	url = git://github.com/docker/stackbrew

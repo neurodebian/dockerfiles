@@ -1,0 +1,118 @@
+#!/bin/bash
+#emacs: -*- mode: shell-script; c-basic-offset: 4; tab-width: 4; indent-tabs-mode: t -*- 
+#ex: set sts=4 ts=4 sw=4 noet:
+#
+#
+# COPYRIGHT: Yaroslav Halchenko 2014
+#
+# LICENSE: MIT
+#
+#  Permission is hereby granted, free of charge, to any person obtaining a copy
+#  of this software and associated documentation files (the "Software"), to deal
+#  in the Software without restriction, including without limitation the rights
+#  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+#  copies of the Software, and to permit persons to whom the Software is
+#  furnished to do so, subject to the following conditions:
+#
+#  The above copyright notice and this permission notice shall be included in
+#  all copies or substantial portions of the Software.
+#
+#  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+#  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+#  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+#  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+#  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+#  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+#  THE SOFTWARE.
+#
+
+set -eu
+
+ae_verbose=3
+
+print_verbose()
+{
+    level=$1; shift
+	if [ "$ae_verbose" -ge $level ]; then
+        # use stderr for printing within functions stdout of which might be used
+        echo -n "I: " >&2
+        i=1; while [ $i -lt $level ]; do echo -ne " ">&2; i=$(($i+1)); done
+        echo -e "$*" >&2
+    fi
+}
+
+error()
+{
+    code=$1; shift
+	echo -e "E: $*" >&2
+    exit $code
+}
+
+
+ND_CFG=neurodebian/neurodebian.cfg
+ND_CFG_TOOL=neurodebian/tools/nd_querycfg
+
+ND_STACKBREW=stackbrew/library/neurodebian
+# remove previously generated files
+git rm -fr dockerfiles/*
+
+releases=$($ND_CFG_TOOL -f $ND_CFG -F" " "release files" | grep -v '^data ' | awk '{print $1}')
+print_verbose 1 "Generating dockerfiles"
+for release in $releases; do
+	[ "$release" = 'data' ] && continue || : #  skip data
+	print_verbose 2 "release: $release"
+
+	# figure out either it is ubuntu or debian
+	release_desc=$($ND_CFG_TOOL -f $ND_CFG "release names" $release)
+	if [[ "$release_desc" =~ ^Debian ]]; then
+		base=debian
+	elif [[ "$release_desc" =~ ^Ubuntu ]]; then
+		base=ubuntu
+	else
+		error "Unknown release $release"
+	fi
+
+	# Generate dockerfile
+	mkdir -p dockerfiles/$release
+	cat >| dockerfiles/$release/Dockerfile <<EOF
+FROM $base:$release
+
+RUN echo 'deb http://neuro.debian.net/debian $release main' > /etc/apt/sources.list.d/neurodebian.sources.list
+RUN echo 'deb http://neuro.debian.net/debian data main' >> /etc/apt/sources.list.d/neurodebian.sources.list
+RUN echo '#deb-src http://neuro.debian.net/debian-devel $release main' >> /etc/apt/sources.list.d/neurodebian.sources.list
+EOF
+
+# to minimize number of RUNs
+#RUN echo '#deb-src http://neuro.debian.net/debian $release main' >> /etc/apt/sources.list.d/neurodebian.sources.list
+#RUN echo '#deb-src http://neuro.debian.net/debian data main' >> /etc/apt/sources.list.d/neurodebian.sources.list
+#RUN echo '#deb http://neuro.debian.net/debian-devel $release main' > /etc/apt/sources.list.d/neurodebian.sources.list
+done
+
+git add dockerfiles
+if git status dockerfiles | grep -q 'nothing to commit'; then
+ 	print_verbose 1 "No changes to dockerfiles - not committing anything"
+else
+ 	print_verbose 1 "Committing to GIT dockerfiles"
+	git commit -m "Re-generated dockerfiles" dockerfiles
+fi
+
+current_treeish=$(git show | head -1 | awk '/^commit /{print $2;}')
+url_treeish=git://github.com/neurodebian/dockerfiles@$current_treeish
+
+print_verbose 1 "Populating ${ND_STACKBREW} for $releases"
+echo "# maintainer: Yaroslav Halchenko <debian@onerussian.com> (@yarikoptic)" >| ${ND_STACKBREW}
+for release in $releases; do
+	echo -e "\n$release: $url_treeish dockerfiles/$release" >> ${ND_STACKBREW}
+	bp_release=$($ND_CFG_TOOL -f $ND_CFG -F" " "release backport ids" $release | sed -e 's,.*=,,g')
+	if [ "$bp_release" != "" ]; then
+		echo "$bp_release: $url_treeish dockerfiles/$release" >> ${ND_STACKBREW}
+	fi
+done
+
+GIT_DIR=stackbrew/.git git add library/neurodebian
+if GIT_DIR=stackbrew/.git git status 2>&1 | grep -q 'nothing to commit'; then
+ 	print_verbose 1 "No changes to stackbrew configuration - not committing anything"
+else
+ 	print_verbose 1 "Committing to GIT stackbrew"
+	( cd stackbrew; echo git commit -m "Updated NeuroDebian definition" library/neurodebian; )
+fi
