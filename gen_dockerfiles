@@ -114,5 +114,5 @@ if GIT_DIR=stackbrew/.git git status 2>&1 | grep -q 'nothing to commit'; then
  	print_verbose 1 "No changes to stackbrew configuration - not committing anything"
 else
  	print_verbose 1 "Committing to GIT stackbrew"
-	( cd stackbrew; echo git commit -m "Updated NeuroDebian definition" library/neurodebian; )
+	( cd stackbrew; git commit -m "Update NeuroDebian" library/neurodebian; )
 fi
