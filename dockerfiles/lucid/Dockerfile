@@ -1,4 +1,4 @@
-FROM ubuntu:lucid
+FROM ubuntu-debootstrap:lucid
 
 RUN echo 'deb http://neuro.debian.net/debian lucid main' > /etc/apt/sources.list.d/neurodebian.sources.list
 RUN echo 'deb http://neuro.debian.net/debian data main' >> /etc/apt/sources.list.d/neurodebian.sources.list
