@@ -56,9 +56,10 @@ ND_STACKBREW=stackbrew/library/neurodebian
 # remove previously generated files
 git rm -fr dockerfiles/*
 
-releases=$($ND_CFG_TOOL -f $ND_CFG -F" " "release files" | grep -v '^data ' | awk '{print $1}')
+all_releases=$($ND_CFG_TOOL -f $ND_CFG -F" " "release files" | grep -v '^data ' | awk '{print $1}')
+releases=
 print_verbose 1 "Generating dockerfiles"
-for release in $releases; do
+for release in $all_releases; do
 	[ "$release" = 'data' ] && continue || : #  skip data
 	print_verbose 2 "release: $release"
 
@@ -67,12 +68,17 @@ for release in $releases; do
 	if [[ "$release_desc" =~ ^Debian ]]; then
 		base=debian
 	elif [[ "$release_desc" =~ ^Ubuntu ]]; then
-		base=ubuntu
+		base=ubuntu-debootstrap
 	else
 		error "Unknown release $release"
 	fi
 
+	if ! grep -q "^$release:" stackbrew/library/$base; then
+		print_verbose 2 "Skipping $release since absent in the $base"
+		continue
+	fi
 	# Generate dockerfile
+	releases+=" $release"
 	mkdir -p dockerfiles/$release
 	cat >| dockerfiles/$release/Dockerfile <<EOF
 FROM $base:$release
@@ -99,6 +105,7 @@ fi
 
 current_treeish=$(git show | head -1 | awk '/^commit /{print $2;}')
 url_treeish=git://github.com/neurodebian/dockerfiles@$current_treeish
+debian_latest=$(awk '/^latest:/{print $3;}' stackbrew/library/debian)
 
 print_verbose 1 "Populating ${ND_STACKBREW} for $releases"
 echo "# maintainer: Yaroslav Halchenko <debian@onerussian.com> (@yarikoptic)" >| ${ND_STACKBREW}
@@ -108,6 +115,10 @@ for release in $releases; do
 	if [ "$bp_release" != "" ]; then
 		echo "$bp_release: $url_treeish dockerfiles/$release" >> ${ND_STACKBREW}
 	fi
+	# Let's use Debian's stable as our stable!
+	if [ "$release" = "$debian_latest" ]; then
+		echo "latest: $url_treeish dockerfiles/$release" >> ${ND_STACKBREW}
+	fi
 done
 
 GIT_DIR=stackbrew/.git git add library/neurodebian
@@ -115,5 +126,5 @@ if GIT_DIR=stackbrew/.git git status 2>&1 | grep -q 'nothing to commit'; then
  	print_verbose 1 "No changes to stackbrew configuration - not committing anything"
 else
  	print_verbose 1 "Committing to GIT stackbrew"
-	( cd stackbrew; git commit -m "Update NeuroDebian" library/neurodebian; )
+	( cd stackbrew; echo git commit -m "Update NeuroDebian" library/neurodebian; )
 fi
