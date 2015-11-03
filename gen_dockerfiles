@@ -68,7 +68,7 @@ for release in $all_releases; do
 	if [[ "$release_desc" =~ ^Debian ]]; then
 		base=debian
 	elif [[ "$release_desc" =~ ^Ubuntu ]]; then
-		base=ubuntu-debootstrap
+		base=ubuntu
 	else
 		error "Unknown release $release"
 	fi
