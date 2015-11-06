@@ -1,4 +1,4 @@
-FROM ubuntu-debootstrap:trusty
+FROM ubuntu:trusty
 
 RUN echo 'deb http://neuro.debian.net/debian trusty main' > /etc/apt/sources.list.d/neurodebian.sources.list
 RUN echo 'deb http://neuro.debian.net/debian data main' >> /etc/apt/sources.list.d/neurodebian.sources.list

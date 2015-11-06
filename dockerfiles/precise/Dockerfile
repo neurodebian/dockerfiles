@@ -1,4 +1,4 @@
-FROM ubuntu-debootstrap:precise
+FROM ubuntu:precise
 
 RUN echo 'deb http://neuro.debian.net/debian precise main' > /etc/apt/sources.list.d/neurodebian.sources.list
 RUN echo 'deb http://neuro.debian.net/debian data main' >> /etc/apt/sources.list.d/neurodebian.sources.list

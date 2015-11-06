@@ -1,4 +1,4 @@
-FROM ubuntu-debootstrap:vivid
+FROM ubuntu:vivid
 
 RUN echo 'deb http://neuro.debian.net/debian vivid main' > /etc/apt/sources.list.d/neurodebian.sources.list
 RUN echo 'deb http://neuro.debian.net/debian data main' >> /etc/apt/sources.list.d/neurodebian.sources.list
