@@ -73,7 +73,7 @@ for release in $all_releases; do
 		error "Unknown release $release"
 	fi
 
-	if ! grep -q "^$release:" stackbrew/library/$base; then
+	if ! grep -q "\\b$release\\b" stackbrew/library/$base; then
 		print_verbose 2 "Skipping $release since absent in the $base"
 		continue
 	fi
