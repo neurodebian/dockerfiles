@@ -1,6 +1,6 @@
 FROM ubuntu:precise
 
-RUN apt-get update && which gpg || { apt-get install -y --no-install-recommends gnupg && rm -rf /var/lib/apt/lists/*; }
+RUN which gpg || { apt-get update && apt-get install -y --no-install-recommends gnupg && rm -rf /var/lib/apt/lists/*; }
 
 RUN echo 'deb http://neuro.debian.net/debian precise main' > /etc/apt/sources.list.d/neurodebian.sources.list
 RUN echo 'deb http://neuro.debian.net/debian data main' >> /etc/apt/sources.list.d/neurodebian.sources.list
