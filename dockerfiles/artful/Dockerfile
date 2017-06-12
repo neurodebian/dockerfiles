@@ -1,4 +1,4 @@
-FROM ubuntu:precise
+FROM ubuntu:artful
 
 # https://bugs.debian.org/830696 (apt uses gpgv by default in newer releases, rather than gpg)
 RUN set -x \
@@ -23,10 +23,11 @@ RUN set -x \
 	&& export GNUPGHOME="$(mktemp -d)" \
 	&& gpg --keyserver ha.pool.sks-keyservers.net --recv-keys DD95CC430502E37EF840ACEEA5D32F012649A5A9 \
 	&& gpg --export DD95CC430502E37EF840ACEEA5D32F012649A5A9 > /etc/apt/trusted.gpg.d/neurodebian.gpg \
-	&& rm -r "$GNUPGHOME"
+	&& rm -rf "$GNUPGHOME" \
+	&& apt-key list | grep neurodebian
 
 RUN { \
-	echo 'deb http://neuro.debian.net/debian precise main'; \
+	echo 'deb http://neuro.debian.net/debian artful main'; \
 	echo 'deb http://neuro.debian.net/debian data main'; \
-	echo '#deb-src http://neuro.debian.net/debian-devel precise main'; \
+	echo '#deb-src http://neuro.debian.net/debian-devel artful main'; \
 } > /etc/apt/sources.list.d/neurodebian.sources.list
