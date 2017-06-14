@@ -23,7 +23,8 @@ RUN set -x \
 	&& export GNUPGHOME="$(mktemp -d)" \
 	&& gpg --keyserver ha.pool.sks-keyservers.net --recv-keys DD95CC430502E37EF840ACEEA5D32F012649A5A9 \
 	&& gpg --export DD95CC430502E37EF840ACEEA5D32F012649A5A9 > /etc/apt/trusted.gpg.d/neurodebian.gpg \
-	&& rm -r "$GNUPGHOME"
+	&& rm -rf "$GNUPGHOME" \
+	&& apt-key list | grep neurodebian
 
 RUN { \
 	echo 'deb http://neuro.debian.net/debian yakkety main'; \
