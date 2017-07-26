@@ -32,4 +32,4 @@ RUN { \
 	echo '#deb-src http://neuro.debian.net/debian-devel jessie main'; \
 } > /etc/apt/sources.list.d/neurodebian.sources.list
 
-RUN sed -i -e 's,\(main\|universe\) *$,\1 contrib non-free,g' /etc/apt/sources.list;
+RUN sed -i -e 's,main *$,main contrib non-free,g' /etc/apt/sources.list.d/neurodebian.sources.list /etc/apt/sources.list
