@@ -1,4 +1,4 @@
-FROM ubuntu:yakkety
+FROM debian:buster
 
 # https://bugs.debian.org/830696 (apt uses gpgv by default in newer releases, rather than gpg)
 RUN set -x \
@@ -27,7 +27,7 @@ RUN set -x \
 	&& apt-key list | grep neurodebian
 
 RUN { \
-	echo 'deb http://neuro.debian.net/debian yakkety main'; \
+	echo 'deb http://neuro.debian.net/debian buster main'; \
 	echo 'deb http://neuro.debian.net/debian data main'; \
-	echo '#deb-src http://neuro.debian.net/debian-devel yakkety main'; \
+	echo '#deb-src http://neuro.debian.net/debian-devel buster main'; \
 } > /etc/apt/sources.list.d/neurodebian.sources.list
