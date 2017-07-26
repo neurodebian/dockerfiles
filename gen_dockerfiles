@@ -56,10 +56,12 @@ ND_STACKBREW=stackbrew/library/neurodebian
 # remove previously generated files
 git rm -fr dockerfiles/*
 
+all_flavors=free non-free
 all_releases=$($ND_CFG_TOOL -f $ND_CFG -F" " "release files" | grep -v '^data ' | awk '{print $1}')
-releases=
+release_tags=
 print_verbose 1 "Generating dockerfiles"
 for release in $all_releases; do
+  for flavor in $all_flavors; do
 	[ "$release" = 'data' ] && continue || : #  skip data
 	print_verbose 2 "release: $release"
 
@@ -77,10 +79,19 @@ for release in $all_releases; do
 		print_verbose 2 "Skipping $release since absent in the $base"
 		continue
 	fi
+	release_suf=
+	if [ $flavor = 'non-free' ]; then
+		release_suf="-$flavor"
+		# to enable additional suites on both debian and ubuntu
+		sed_cmd="RUN sed -i -e 's,\(main\|universe\) *$,\1 contrib non-free,g' /etc/apt/sources.list;"
+	else
+		sed_cmd=
+	fi
+	release_tag=$release$release_suf
 	# Generate dockerfile
-	releases+=" $release"
-	mkdir -p dockerfiles/$release
-	cat >| dockerfiles/$release/Dockerfile <<EOF
+	release_tags+=" '$release $release_suf'"
+	mkdir -p dockerfiles/$release_tag
+	cat >| dockerfiles/$release_tag/Dockerfile <<EOF
 FROM $base:$release
 
 # https://bugs.debian.org/830696 (apt uses gpgv by default in newer releases, rather than gpg)
@@ -114,7 +125,10 @@ RUN { \\
 	echo 'deb http://neuro.debian.net/debian data main'; \\
 	echo '#deb-src http://neuro.debian.net/debian-devel $release main'; \\
 } > /etc/apt/sources.list.d/neurodebian.sources.list
+
+$sed_cmd
 EOF
+  done
 done
 
 git add dockerfiles
@@ -131,15 +145,16 @@ debian_latest=$(awk '/^latest:/{print $3;}' stackbrew/library/debian)
 
 print_verbose 1 "Populating ${ND_STACKBREW} for $releases"
 echo "# maintainer: Yaroslav Halchenko <debian@onerussian.com> (@yarikoptic)" >| ${ND_STACKBREW}
-for release in $releases; do
-	echo -e "\n$release: $url_treeish dockerfiles/$release" >> ${ND_STACKBREW}
-	bp_release=$($ND_CFG_TOOL -f $ND_CFG -F" " "release backport ids" $release | sed -e 's,.*=,,g')
+for release, release_suf in $release_tags; do
+	release_tag=$release$release_suf
+	echo -e "\n$release_tag: $url_treeish dockerfiles/$release_tag" >> ${ND_STACKBREW}
+	bp_release=$($ND_CFG_TOOL -f $ND_CFG -F" " "release backport ids" ${release} | sed -e 's,.*=,,g')
 	if [ "$bp_release" != "" ]; then
-		echo "$bp_release: $url_treeish dockerfiles/$release" >> ${ND_STACKBREW}
+		echo "$bp_release$release_suf: $url_treeish dockerfiles/$release_tag" >> ${ND_STACKBREW}
 	fi
 	# Let's use Debian's stable as our stable!
 	if [ "$release" = "$debian_latest" ]; then
-		echo "latest: $url_treeish dockerfiles/$release" >> ${ND_STACKBREW}
+		echo "latest$release_suf: $url_treeish dockerfiles/$release_tag" >> ${ND_STACKBREW}
 	fi
 done
 
