@@ -1,4 +1,4 @@
-FROM ubuntu:artful
+FROM debian:buster
 
 # https://bugs.debian.org/830696 (apt uses gpgv by default in newer releases, rather than gpg)
 RUN set -x \
@@ -27,9 +27,9 @@ RUN set -x \
 	&& apt-key list | grep neurodebian
 
 RUN { \
-	echo 'deb http://neuro.debian.net/debian artful main'; \
+	echo 'deb http://neuro.debian.net/debian buster main'; \
 	echo 'deb http://neuro.debian.net/debian data main'; \
-	echo '#deb-src http://neuro.debian.net/debian-devel artful main'; \
+	echo '#deb-src http://neuro.debian.net/debian-devel buster main'; \
 } > /etc/apt/sources.list.d/neurodebian.sources.list
 
-
+RUN sed -i -e 's,\(main\|universe\) *$,\1 contrib non-free,g' /etc/apt/sources.list;
