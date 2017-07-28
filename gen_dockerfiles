@@ -150,7 +150,7 @@ else
 fi
 
 current_treeish=$(git show | head -1 | awk '/^commit /{print $2;}')
-url_treeish=git://github.com/neurodebian/dockerfiles@$current_treeish
+url_treeish=https://github.com/neurodebian/dockerfiles@$current_treeish
 debian_latest=$(awk '/^latest:/{print $3;}' stackbrew/library/debian)
 
 print_verbose 1 "Populating ${ND_STACKBREW} for $release_tags"
