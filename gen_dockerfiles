@@ -109,8 +109,6 @@ RUN set -x \\
 	&& apt-get update \\
 	&& { \\
 		which gpg \\
-# prefer gnupg2, to match APT's Recommends
-		|| apt-get install -y --no-install-recommends gnupg2 \\
 		|| apt-get install -y --no-install-recommends gnupg \\
 	; } \\
 # Ubuntu includes "gnupg" (not "gnupg2", but still 2.x), but not dirmngr, and gnupg 2.x requires dirmngr
