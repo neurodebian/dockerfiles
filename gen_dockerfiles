@@ -147,26 +147,33 @@ else
 	git commit -m "Re-generated dockerfiles" dockerfiles
 fi
 
-current_treeish=$(git show | head -1 | awk '/^commit /{print $2;}')
-url_treeish=https://github.com/neurodebian/dockerfiles@$current_treeish
-debian_latest=$(awk '/^latest:/{print $3;}' stackbrew/library/debian)
+current_treeish=$(git rev-parse HEAD^{commit})
+debian_latest=$(awk -F '[ ,]+' '/latest/ { print $2; }' stackbrew/library/debian)
 
 print_verbose 1 "Populating ${ND_STACKBREW} for $release_tags"
-echo "# maintainer: Yaroslav Halchenko <debian@onerussian.com> (@yarikoptic)" >| ${ND_STACKBREW}
+echo "Maintainers: Yaroslav Halchenko <debian@onerussian.com> (@yarikoptic)" >| ${ND_STACKBREW}
+echo "GitRepo: https://github.com/neurodebian/dockerfiles.git" >> ${ND_STACKBREW}
+echo "GitCommit: $current_treeish" >> ${ND_STACKBREW}
 for release_rec in $release_tags; do
 	# NOTE: there might be a better way
 	release=${release_rec%_*}
 	release_suf=${release_rec##*_}
 	release_tag=$release$release_suf
-	echo -e "\n$release_tag: $url_treeish dockerfiles/$release_tag" >> ${ND_STACKBREW}
+	release_tags_all=$release_tag
 	bp_release=$($ND_CFG_TOOL -f $ND_CFG -F" " "release backport ids" ${release} | sed -e 's,.*=,,g')
 	if [ "$bp_release" != "" ]; then
-		echo "$bp_release$release_suf: $url_treeish dockerfiles/$release_tag" >> ${ND_STACKBREW}
+		release_tags_all+=", $bp_release$release_suf"
 	fi
 	# Let's use Debian's stable as our stable!
 	if [ "$release" = "$debian_latest" ]; then
-		echo "latest$release_suf: $url_treeish dockerfiles/$release_tag" >> ${ND_STACKBREW}
+		if [ "$release_suf" != "" ]; then
+			# "non-free"
+			release_tags_all+=", ${release_suf#-}"
+		else
+			release_tags_all+=", latest"
+		fi
 	fi
+	echo -e "\nTags: $release_tags_all\nDirectory: dockerfiles/$release_tag" >> ${ND_STACKBREW}
 done
 
 GIT_DIR=stackbrew/.git git add library/neurodebian
