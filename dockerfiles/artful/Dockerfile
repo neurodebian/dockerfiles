@@ -12,7 +12,8 @@ RUN set -x \
 	&& { \
 		gpg --version | grep -q '^gpg (GnuPG) 1\.' \
 		|| apt-get install -y --no-install-recommends dirmngr \
-	; }
+	; } \
+	&& rm -rf /var/lib/apt/lists/*
 
 # apt-key is a bit finicky during "docker build" with gnupg 2.x, so install the repo key the same way debian-archive-keyring does (/etc/apt/trusted.gpg.d)
 # this makes "apt-key list" output prettier too!
@@ -27,17 +28,16 @@ RUN { \
 	echo 'deb http://neuro.debian.net/debian artful main'; \
 	echo 'deb http://neuro.debian.net/debian data main'; \
 	echo '#deb-src http://neuro.debian.net/debian-devel artful main'; \
-} > /etc/apt/sources.list.d/neurodebian.sources.list \
-    && apt-get update
+} > /etc/apt/sources.list.d/neurodebian.sources.list
 
 # Minimalistic package to assist with freezing the APT configuration
 # which would be coming from neurodebian repo.
 # Also install and enable eatmydata to be used for all apt-get calls
 # to speed up docker builds.
-RUN apt-get install -y --no-install-recommends neurodebian-freeze eatmydata \
-    && ln -s /usr/bin/eatmydata /usr/local/bin/apt-get
-
-# Clean up
-RUN rm -rf /var/lib/apt/lists/*
+RUN set -x \
+	&& apt-get update \
+	&& apt-get install -y --no-install-recommends neurodebian-freeze eatmydata \
+	&& ln -s /usr/bin/eatmydata /usr/local/bin/apt-get \
+	&& rm -rf /var/lib/apt/lists/*
 
 
