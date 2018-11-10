@@ -32,20 +32,20 @@ ae_verbose=3
 
 print_verbose()
 {
-    level=$1; shift
+	level=$1; shift
 	if [ "$ae_verbose" -ge $level ]; then
-        # use stderr for printing within functions stdout of which might be used
-        echo -n "I: " >&2
-        i=1; while [ $i -lt $level ]; do echo -ne " ">&2; i=$(($i+1)); done
-        echo -e "$*" >&2
-    fi
+		# use stderr for printing within functions stdout of which might be used
+		echo -n "I: " >&2
+		i=1; while [ $i -lt $level ]; do echo -ne " ">&2; i=$(($i+1)); done
+		echo -e "$*" >&2
+	fi
 }
 
 error()
 {
-    code=$1; shift
+	code=$1; shift
 	echo -e "E: $*" >&2
-    exit $code
+	exit $code
 }
 
 
@@ -92,8 +92,8 @@ for release in $all_releases; do
 				# free and -non-free flavors which might differ only in having NeuroDebian repo
 				# enabled for contrib and non-free
 				sed_cmd+="; grep -q 'deb .* multiverse$' /etc/apt/sources.list || sed -i -e 's,universe *$,universe multiverse,g' /etc/apt/sources.list";;
-            *) echo "Unknown base $base" >&2; exit 1;;
-        esac
+			*) echo "Unknown base $base" >&2; exit 1;;
+		esac
 	else
 		sed_cmd=
 	fi
@@ -134,6 +134,16 @@ RUN { \\
 	echo '#deb-src http://neuro.debian.net/debian-devel $release main'; \\
 } > /etc/apt/sources.list.d/neurodebian.sources.list
 
+# Minimalistic package to assist with freezing the APT configuration
+# which would be coming from neurodebian repo.
+# Also install and enable eatmydata to be used for all apt-get calls
+# to speed up docker builds.
+RUN set -x \\
+	&& apt-get update \\
+	&& apt-get install -y --no-install-recommends neurodebian-freeze eatmydata \\
+	&& ln -s /usr/bin/eatmydata /usr/local/bin/apt-get \\
+	&& rm -rf /var/lib/apt/lists/*
+
 $sed_cmd
 EOF
   done
@@ -141,9 +151,9 @@ done
 
 git add dockerfiles
 if git status dockerfiles | grep -q 'nothing to commit'; then
- 	print_verbose 1 "No changes to dockerfiles - not committing anything"
+	print_verbose 1 "No changes to dockerfiles - not committing anything"
 else
- 	print_verbose 1 "Committing to GIT dockerfiles"
+	print_verbose 1 "Committing to GIT dockerfiles"
 	git commit -m "Re-generated dockerfiles" dockerfiles
 fi
 
@@ -178,8 +188,8 @@ done
 
 GIT_DIR=stackbrew/.git git add library/neurodebian
 if GIT_DIR=stackbrew/.git git status 2>&1 | grep -q 'nothing to commit'; then
- 	print_verbose 1 "No changes to stackbrew configuration - not committing anything"
+	print_verbose 1 "No changes to stackbrew configuration - not committing anything"
 else
- 	print_verbose 1 "Committing to GIT stackbrew"
+	print_verbose 1 "Committing to GIT stackbrew"
 	( cd stackbrew; echo git commit -m "Update NeuroDebian" library/neurodebian; )
 fi

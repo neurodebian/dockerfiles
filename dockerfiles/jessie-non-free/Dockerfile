@@ -30,4 +30,14 @@ RUN { \
 	echo '#deb-src http://neuro.debian.net/debian-devel jessie main'; \
 } > /etc/apt/sources.list.d/neurodebian.sources.list
 
+# Minimalistic package to assist with freezing the APT configuration
+# which would be coming from neurodebian repo.
+# Also install and enable eatmydata to be used for all apt-get calls
+# to speed up docker builds.
+RUN set -x \
+	&& apt-get update \
+	&& apt-get install -y --no-install-recommends neurodebian-freeze eatmydata \
+	&& ln -s /usr/bin/eatmydata /usr/local/bin/apt-get \
+	&& rm -rf /var/lib/apt/lists/*
+
 RUN sed -i -e 's,main *$,main contrib non-free,g' /etc/apt/sources.list.d/neurodebian.sources.list /etc/apt/sources.list
