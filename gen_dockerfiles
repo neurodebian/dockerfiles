@@ -102,6 +102,7 @@ for release in $all_releases; do
 	release_tags+=" ${release}_$release_suf"
 	mkdir -p dockerfiles/$release_tag
 	cat >| dockerfiles/$release_tag/Dockerfile <<EOF
+# Build #: +1
 FROM $base:$release
 
 # https://bugs.debian.org/830696 (apt uses gpgv by default in newer releases, rather than gpg)
