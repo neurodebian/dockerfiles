@@ -1,5 +1,5 @@
 # Build #: +1
-FROM ubuntu:disco
+FROM ubuntu:focal
 
 # https://bugs.debian.org/830696 (apt uses gpgv by default in newer releases, rather than gpg)
 RUN set -x \
@@ -26,9 +26,9 @@ RUN set -x \
 	&& apt-key list | grep neurodebian
 
 RUN { \
-	echo 'deb http://neuro.debian.net/debian disco main'; \
+	echo 'deb http://neuro.debian.net/debian focal main'; \
 	echo 'deb http://neuro.debian.net/debian data main'; \
-	echo '#deb-src http://neuro.debian.net/debian-devel disco main'; \
+	echo '#deb-src http://neuro.debian.net/debian-devel focal main'; \
 } > /etc/apt/sources.list.d/neurodebian.sources.list
 
 # Minimalistic package to assist with freezing the APT configuration
