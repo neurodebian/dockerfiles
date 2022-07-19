@@ -184,7 +184,11 @@ for release_rec in $release_tags; do
 			release_tags_all+=", latest"
 		fi
 	fi
-	echo -e "\nTags: $release_tags_all\nDirectory: dockerfiles/$release_tag" >> ${ND_STACKBREW}
+	cat << EOF >> ${ND_STACKBREW}
+
+Tags: $release_tags_all
+Directory: dockerfiles/$release_tag
+EOF
 done
 
 GIT_DIR=stackbrew/.git git add library/neurodebian
