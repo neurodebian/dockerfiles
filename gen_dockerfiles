@@ -83,15 +83,15 @@ for release in $all_releases; do
 	if [ "$flavor" = 'non-free' ]; then
 		release_suf="-$flavor"
 		# to enable additional suites on both debian and ubuntu
-		sed_cmd="RUN sed -i -e 's,main *$,main contrib non-free,g' /etc/apt/sources.list.d/neurodebian.sources.list"
+		sed_cmd="RUN [ -e /etc/apt/sources.list.d/debian.sources ] && srcs=/etc/apt/sources.list.d/debian.sources || srcs=/etc/apt/sources.list; sed -i -e 's,main *$,main contrib non-free,g' /etc/apt/sources.list.d/neurodebian.sources.list"
 		case $base in
-			debian) sed_cmd+=" /etc/apt/sources.list";; # the same substitution
+			debian) sed_cmd+=" $srcs";; # the same substitution
 			ubuntu)
 				# some (recent, from 17.04/zesty?) ubuntu images might have multiverse already listed, so they are
 				# "non-free" by default.  For consistency we would still keep "original", possibly
 				# free and -non-free flavors which might differ only in having NeuroDebian repo
 				# enabled for contrib and non-free
-				sed_cmd+="; grep -q 'deb .* multiverse$' /etc/apt/sources.list || sed -i -e 's,universe *$,universe multiverse,g' /etc/apt/sources.list";;
+				sed_cmd+="; grep -q 'deb .* multiverse$' $srcs || sed -i -e 's,universe *$,universe multiverse,g' $srcs";;
 			*) echo "Unknown base $base" >&2; exit 1;;
 		esac
 	else
