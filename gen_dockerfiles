@@ -33,10 +33,10 @@ ae_verbose=3
 print_verbose()
 {
 	level=$1; shift
-	if [ "$ae_verbose" -ge $level ]; then
+	if [ "$ae_verbose" -ge "$level" ]; then
 		# use stderr for printing within functions stdout of which might be used
 		echo -n "I: " >&2
-		i=1; while [ $i -lt $level ]; do echo -ne " ">&2; i=$(($i+1)); done
+		i=1; while [ $i -lt "$level" ]; do echo -ne " ">&2; i=$(($i+1)); done
 		echo -e "$*" >&2
 	fi
 }
@@ -45,7 +45,7 @@ error()
 {
 	code=$1; shift
 	echo -e "E: $*" >&2
-	exit $code
+	exit "$code"
 }
 
 
@@ -66,7 +66,7 @@ for release in $all_releases; do
 	print_verbose 2 "release: $release"
 
 	# figure out either it is ubuntu or debian
-	release_desc=$($ND_CFG_TOOL -f $ND_CFG "release names" $release)
+	release_desc=$($ND_CFG_TOOL -f $ND_CFG "release names" "$release")
 	if [[ "$release_desc" =~ ^Debian ]]; then
 		base=debian
 	elif [[ "$release_desc" =~ ^Ubuntu ]]; then
@@ -80,7 +80,7 @@ for release in $all_releases; do
 		continue
 	fi
 	release_suf=
-	if [ $flavor = 'non-free' ]; then
+	if [ "$flavor" = 'non-free' ]; then
 		release_suf="-$flavor"
 		# to enable additional suites on both debian and ubuntu
 		sed_cmd="RUN sed -i -e 's,main *$,main contrib non-free,g' /etc/apt/sources.list.d/neurodebian.sources.list"
@@ -100,8 +100,8 @@ for release in $all_releases; do
 	release_tag=$release$release_suf
 	# Generate dockerfile
 	release_tags+=" ${release}_$release_suf"
-	mkdir -p dockerfiles/$release_tag
-	cat >| dockerfiles/$release_tag/Dockerfile <<EOF
+	mkdir -p "dockerfiles/$release_tag"
+	cat >| "dockerfiles/$release_tag/Dockerfile" <<EOF
 # Build #: +1
 FROM $base:$release
 
@@ -158,7 +158,7 @@ else
 	git commit -m "Re-generated dockerfiles" dockerfiles
 fi
 
-current_treeish=$(git rev-parse HEAD^{commit})
+current_treeish=$(git rev-parse 'HEAD^{commit}')
 debian_latest=$(awk -F '[ ,]+' '/latest/ { print $2; }' stackbrew/library/debian)
 
 print_verbose 1 "Populating ${ND_STACKBREW} for $release_tags"
@@ -167,11 +167,17 @@ echo "GitRepo: https://github.com/neurodebian/dockerfiles.git" >> ${ND_STACKBREW
 echo "GitCommit: $current_treeish" >> ${ND_STACKBREW}
 for release_rec in $release_tags; do
 	# NOTE: there might be a better way
-	release=${release_rec%_*}
-	release_suf=${release_rec##*_}
-	release_tag=$release$release_suf
-	release_tags_all=$release_tag
-	bp_release=$($ND_CFG_TOOL -f $ND_CFG -F" " "release backport ids" ${release} | sed -e 's,.*=,,g')
+	release="${release_rec%_*}"
+	release_suf="${release_rec##*_}"
+	release_tag="$release$release_suf"
+	release_tags_all="$release_tag"
+    architectures="amd64, arm64v8" # will add  i386 if Debian
+	bp_release=$($ND_CFG_TOOL -f $ND_CFG -F" " "release backport ids" "${release}" | sed -e 's,.*=,,g')
+    if echo "$bp_release" | grep -q '\.'; then
+        : # ubuntu release since has . in it. nothing to do
+    else
+        architectures+=", i386"
+    fi
 	if [ "$bp_release" != "" ]; then
 		release_tags_all+=", $bp_release$release_suf"
 	fi
@@ -187,6 +193,7 @@ for release_rec in $release_tags; do
 	cat << EOF >> ${ND_STACKBREW}
 
 Tags: $release_tags_all
+Architectures: $architectures
 Directory: dockerfiles/$release_tag
 EOF
 done
