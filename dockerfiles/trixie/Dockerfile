@@ -1,5 +1,5 @@
 # Build #: +1
-FROM ubuntu:bionic
+FROM debian:trixie
 
 # https://bugs.debian.org/830696 (apt uses gpgv by default in newer releases, rather than gpg)
 RUN set -x \
@@ -26,9 +26,9 @@ RUN set -x \
 	&& apt-key list | grep neurodebian
 
 RUN { \
-	echo 'deb http://neuro.debian.net/debian bionic main'; \
+	echo 'deb http://neuro.debian.net/debian trixie main'; \
 	echo 'deb http://neuro.debian.net/debian data main'; \
-	echo '#deb-src http://neuro.debian.net/debian-devel bionic main'; \
+	echo '#deb-src http://neuro.debian.net/debian-devel trixie main'; \
 } > /etc/apt/sources.list.d/neurodebian.sources.list
 
 # Minimalistic package to assist with freezing the APT configuration
@@ -41,4 +41,4 @@ RUN set -x \
 	&& ln -s /usr/bin/eatmydata /usr/local/bin/apt-get \
 	&& rm -rf /var/lib/apt/lists/*
 
-RUN [ -e /etc/apt/sources.list.d/debian.sources ] && srcs=/etc/apt/sources.list.d/debian.sources || srcs=/etc/apt/sources.list; sed -i -e 's,main *$,main contrib non-free,g' /etc/apt/sources.list.d/neurodebian.sources.list; grep -q 'deb .* multiverse$' $srcs || sed -i -e 's,universe *$,universe multiverse,g' $srcs
+
