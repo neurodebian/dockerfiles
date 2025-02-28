@@ -21,14 +21,14 @@ RUN set -x \
 RUN set -x \
 	&& export GNUPGHOME="$(mktemp -d)" \
 	&& gpg --batch --keyserver keyserver.ubuntu.com --recv-keys DD95CC430502E37EF840ACEEA5D32F012649A5A9 \
-	&& gpg --batch --export DD95CC430502E37EF840ACEEA5D32F012649A5A9 > /etc/apt/trusted.gpg.d/neurodebian.gpg \
-	&& rm -rf "$GNUPGHOME" \
-	&& apt-key list | grep neurodebian
+	&& mkdir -p /etc/apt/keyrings \
+	&& gpg --batch --export --armor DD95CC430502E37EF840ACEEA5D32F012649A5A9 > /etc/apt/keyrings/neurodebian.asc \
+	&& rm -rf "$GNUPGHOME"
 
 RUN { \
-	echo 'deb http://neuro.debian.net/debian noble main'; \
-	echo 'deb http://neuro.debian.net/debian data main'; \
-	echo '#deb-src http://neuro.debian.net/debian-devel noble main'; \
+	echo 'deb [signed-by=/etc/apt/keyrings/neurodebian.asc] http://neuro.debian.net/debian noble main'; \
+	echo 'deb [signed-by=/etc/apt/keyrings/neurodebian.asc] http://neuro.debian.net/debian data main'; \
+	echo '#deb-src [signed-by=/etc/apt/keyrings/neurodebian.asc] http://neuro.debian.net/debian-devel noble main'; \
 } > /etc/apt/sources.list.d/neurodebian.sources.list
 
 # Minimalistic package to assist with freezing the APT configuration
