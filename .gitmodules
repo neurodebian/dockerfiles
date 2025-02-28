@@ -1,6 +1,6 @@
 [submodule "neurodebian"]
 	path = neurodebian
-	url = git://github.com/neurodebian/neurodebian.git
+	url = https://github.com/neurodebian/neurodebian.git
 [submodule "stackbrew"]
 	path = stackbrew
-	url = git://github.com/docker-library/official-images.git
+	url = https://github.com/docker-library/official-images.git
