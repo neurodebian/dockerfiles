@@ -53,6 +53,13 @@ ND_CFG=neurodebian/neurodebian.cfg
 ND_CFG_TOOL=neurodebian/tools/nd_querycfg
 
 ND_STACKBREW=stackbrew/library/neurodebian
+
+function get_key() {
+    gpg --import --import-options show-only --import neurodebian/keys/neurodebian-archive-keyring.gpg 2>/dev/null | sed -n -e "/^pub.*$1/{n;s/^[[:space:]]*//;p;}"
+}
+GPG_OLD_KEY=$(get_key dsa1024)
+GPG_NEW_KEY=$(get_key rsa4096)
+
 # remove previously generated files
 git rm -fr dockerfiles/*
 
@@ -98,6 +105,13 @@ for release in $all_releases; do
 		sed_cmd=
 	fi
 	release_tag=$release$release_suf
+    # Use older key in older releases
+	if [[ "$release_desc" =~ ^Ubuntu\ 2[024].* ]] || [[ "$release_desc" =~ ^Debian\ GNU/Linux\ 1[012]* ]]; then 
+        print_verbose 1 "Using old GPG key for $release_desc"
+        GPG_KEY="$GPG_OLD_KEY"; 
+    else
+        GPG_KEY="$GPG_NEW_KEY";
+    fi
 	# Generate dockerfile
 	release_tags+=" ${release}_$release_suf"
 	mkdir -p "dockerfiles/$release_tag"
@@ -124,9 +138,9 @@ RUN set -x \\
 # this makes "apt-key list" output prettier too!
 RUN set -x \\
 	&& export GNUPGHOME="\$(mktemp -d)" \\
-	&& gpg --batch --keyserver keyserver.ubuntu.com --recv-keys DD95CC430502E37EF840ACEEA5D32F012649A5A9 \\
+	&& gpg --batch --keyserver keyserver.ubuntu.com --recv-keys $GPG_KEY \\
 	&& mkdir -p /etc/apt/keyrings \\
-	&& gpg --batch --export --armor DD95CC430502E37EF840ACEEA5D32F012649A5A9 > /etc/apt/keyrings/neurodebian.asc \\
+	&& gpg --batch --export --armor $GPG_KEY > /etc/apt/keyrings/neurodebian.asc \\
 	&& rm -rf "\$GNUPGHOME"
 
 RUN { \\
