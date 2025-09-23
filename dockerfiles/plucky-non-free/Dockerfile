@@ -1,5 +1,5 @@
 # Build #: +1
-FROM ubuntu:focal
+FROM ubuntu:plucky
 
 # https://bugs.debian.org/830696 (apt uses gpgv by default in newer releases, rather than gpg)
 RUN set -x \
@@ -20,15 +20,15 @@ RUN set -x \
 # this makes "apt-key list" output prettier too!
 RUN set -x \
 	&& export GNUPGHOME="$(mktemp -d)" \
-	&& gpg --batch --keyserver keyserver.ubuntu.com --recv-keys DD95CC430502E37EF840ACEEA5D32F012649A5A9 \
+	&& gpg --batch --keyserver keyserver.ubuntu.com --recv-keys 4E9A2E702A23C7C882574536439754ED1F42AA2C \
 	&& mkdir -p /etc/apt/keyrings \
-	&& gpg --batch --export --armor DD95CC430502E37EF840ACEEA5D32F012649A5A9 > /etc/apt/keyrings/neurodebian.asc \
+	&& gpg --batch --export --armor 4E9A2E702A23C7C882574536439754ED1F42AA2C > /etc/apt/keyrings/neurodebian.asc \
 	&& rm -rf "$GNUPGHOME"
 
 RUN { \
-	echo 'deb [signed-by=/etc/apt/keyrings/neurodebian.asc] http://neuro.debian.net/debian focal main'; \
+	echo 'deb [signed-by=/etc/apt/keyrings/neurodebian.asc] http://neuro.debian.net/debian plucky main'; \
 	echo 'deb [signed-by=/etc/apt/keyrings/neurodebian.asc] http://neuro.debian.net/debian data main'; \
-	echo '#deb-src [signed-by=/etc/apt/keyrings/neurodebian.asc] http://neuro.debian.net/debian-devel focal main'; \
+	echo '#deb-src [signed-by=/etc/apt/keyrings/neurodebian.asc] http://neuro.debian.net/debian-devel plucky main'; \
 } > /etc/apt/sources.list.d/neurodebian.sources.list
 
 # Minimalistic package to assist with freezing the APT configuration
@@ -41,4 +41,4 @@ RUN set -x \
 	&& ln -s /usr/bin/eatmydata /usr/local/bin/apt-get \
 	&& rm -rf /var/lib/apt/lists/*
 
-
+RUN [ -e /etc/apt/sources.list.d/debian.sources ] && srcs=/etc/apt/sources.list.d/debian.sources || srcs=/etc/apt/sources.list; sed -i -e 's,main *$,main contrib non-free,g' /etc/apt/sources.list.d/neurodebian.sources.list; grep -q 'deb .* multiverse$' $srcs || sed -i -e 's,universe *$,universe multiverse,g' $srcs
