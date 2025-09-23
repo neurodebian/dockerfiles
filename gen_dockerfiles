@@ -36,7 +36,7 @@ print_verbose()
 	if [ "$ae_verbose" -ge "$level" ]; then
 		# use stderr for printing within functions stdout of which might be used
 		echo -n "I: " >&2
-		i=1; while [ $i -lt "$level" ]; do echo -ne " ">&2; i=$(($i+1)); done
+		i=1; while [ $i -lt "$level" ]; do echo -ne " ">&2; i=$((i+1)); done
 		echo -e "$*" >&2
 	fi
 }
