@@ -106,7 +106,7 @@ for release in $all_releases; do
 	fi
 	release_tag=$release$release_suf
     # Use older key in older releases
-	if [[ "$release_desc" =~ ^Ubuntu\ 2[024].* ]] || [[ "$release_desc" =~ ^Debian\ GNU/Linux\ 1[012]* ]]; then 
+	if [[ "$release_desc" =~ ^Ubuntu\ 2[02].* ]] || [[ "$release_desc" =~ ^Debian\ GNU/Linux\ 1[012].* ]]; then
         print_verbose 1 "Using old GPG key for $release_desc"
         GPG_KEY="$GPG_OLD_KEY"; 
     else
